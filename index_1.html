@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Кабинет+ — AI асистент за дентални кабинети</title>
+<meta name="description" content="AI асистент за кабинети с 1–2 стола: отговаря на пациентите, попълва амбулаторния лист от диктовка и подготвя фактурите. Ранен достъп за първите 10 кабинета.">
+<meta property="og:title" content="Кабинет+ — AI асистент за дентални кабинети">
+<meta property="og:description" content="Вие лекувате. AI отговаря на пациентите, попълва амбулаторния лист и подготвя фактурата.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230f766e'/%3E%3Cpath d='M16 8v16M8 16h16' stroke='white' stroke-width='4' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;600&family=Onest:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: clinic-clean single column; hero = live product mock (AI chat + dictated ambulatory sheet); AI marked by one indigo "spark" tag */
+:root{
+  --bg:#f3f7f6; --surface:#ffffff; --surface-2:#e8f1ee; --line:#d3e1dd;
+  --ink:#0d2b2a; --muted:#4c6664; --brand:#0f766e; --brand-ink:#ffffff; --brand-soft:#d6eee8;
+  --ai:#3a47b8; --ai-soft:#e5e8fb; --warn:#a1610b; --warn-soft:#fbefd9;
+  --f-display:"Unbounded","Onest",system-ui,sans-serif;
+  --f-body:"Onest",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace;
+  --r:14px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0b1716; --surface:#11211f; --surface-2:#16302c; --line:#24413d;
+  --ink:#e4f1ee; --muted:#9db6b2; --brand:#3cb8a8; --brand-ink:#04211e; --brand-soft:#16302c;
+  --ai:#9fa9ff; --ai-soft:#22284f; --warn:#f0b65a; --warn-soft:#3a2c14; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0b1716; --surface:#11211f; --surface-2:#16302c; --line:#24413d;
+  --ink:#e4f1ee; --muted:#9db6b2; --brand:#3cb8a8; --brand-ink:#04211e; --brand-soft:#16302c;
+  --ai:#9fa9ff; --ai-soft:#22284f; --warn:#f0b65a; --warn-soft:#3a2c14; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.55;margin:0}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+h1,h2,h3{font-family:var(--f-display);font-weight:600;text-wrap:balance;margin:0;letter-spacing:-.01em}
+h1{font-size:clamp(30px,5vw,54px);line-height:1.08}
+h2{font-size:clamp(24px,3.4vw,36px);line-height:1.15}
+h3{font-size:18px;line-height:1.3;font-weight:500}
+p{margin:0}
+a{color:inherit}
+.muted{color:var(--muted)}
+.eyebrow{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--brand);font-weight:600}
+.ai-tag{display:inline-flex;align-items:center;gap:6px;font-family:var(--f-mono);font-size:12px;font-weight:500;color:var(--ai);background:var(--ai-soft);padding:3px 9px;border-radius:999px;white-space:nowrap}
+.ai-tag::before{content:"";width:8px;height:8px;background:currentColor;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%)}
+.soon{font-family:var(--f-mono);font-size:12px;color:var(--warn);background:var(--warn-soft);padding:3px 9px;border-radius:999px;white-space:nowrap}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;font:600 16px var(--f-body);padding:13px 22px;border-radius:12px;border:1px solid transparent;cursor:pointer;text-decoration:none;transition:transform .15s ease,background .15s ease}
+.btn-primary{background:var(--brand);color:var(--brand-ink)}
+.btn-primary:hover{transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--ink);border-color:var(--line)}
+.btn:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:3px solid var(--ai);outline-offset:2px}
+
+/* header */
+header{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:21;background:var(--bg)}
+.nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:14px}
+.logo{font-family:var(--f-display);font-weight:600;font-size:20px;color:var(--brand);text-decoration:none}
+.nav-links{display:flex;gap:24px;font-size:15px}
+.nav-links a{text-decoration:none;color:var(--muted)}
+.nav-links a:hover{color:var(--ink)}
+@media (max-width:760px){.nav-links{display:none}}
+
+/* hero */
+.hero{display:grid;grid-template-columns:1.05fr .95fr;gap:48px;align-items:center;padding-block:56px 64px}
+.hero-copy{display:flex;flex-direction:column;gap:22px;min-width:0}
+.hero-copy .lead{font-size:19px;color:var(--muted);max-width:34em}
+.hero-points{display:grid;gap:10px;padding:0;margin:0;list-style:none}
+.hero-points li{display:flex;gap:10px;align-items:baseline}
+.hero-points li::before{content:"";flex:none;width:7px;height:7px;border-radius:2px;background:var(--brand);transform:translateY(-2px)}
+.cta-row{display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.beta-note{font-size:14px;color:var(--muted)}
+@media (max-width:900px){.hero{grid-template-columns:1fr;gap:36px;padding-block:36px 48px}}
+
+/* product mock */
+.mock{display:grid;gap:14px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px;min-width:0}
+.panel-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;font-size:14px;color:var(--muted)}
+.chat{display:grid;gap:8px}
+.msg{max-width:84%;padding:9px 12px;border-radius:12px;font-size:14.5px;line-height:1.45}
+.msg time{display:block;font-family:var(--f-mono);font-size:11px;color:var(--muted);margin-bottom:2px}
+.msg.patient{background:var(--surface-2);justify-self:start;border-bottom-left-radius:4px}
+.msg.bot{background:var(--ai-soft);justify-self:end;border-bottom-right-radius:4px}
+.booked{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-top:6px;padding:9px 12px;border:1px dashed var(--brand);border-radius:10px;font-size:14px}
+.booked b{color:var(--brand)}
+.dictation{font-family:var(--f-mono);font-size:13px;background:var(--surface-2);border-radius:10px;padding:10px 12px;color:var(--muted);margin-bottom:12px}
+.dictation span{color:var(--ink)}
+.sheet{display:grid;grid-template-columns:auto 1fr;gap:6px 14px;font-size:14px;margin:0}
+.sheet dt{color:var(--muted)}
+.sheet dd{margin:0;font-family:var(--f-mono);font-size:13.5px}
+.approve{display:flex;gap:8px;margin-top:12px;flex-wrap:wrap}
+.approve .btn{padding:8px 14px;font-size:14px;border-radius:9px}
+.sample-note{font-size:12px;color:var(--muted);text-align:right}
+
+/* sections */
+section{padding-block:72px}
+.section-head{display:grid;gap:12px;max-width:44em;margin-bottom:36px}
+.band{background:var(--surface);border-block:1px solid var(--line)}
+
+/* pains */
+.pains{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.pain{display:grid;gap:8px;align-content:start;padding-top:16px;border-top:2px solid var(--brand)}
+.pain p{color:var(--muted);font-size:15.5px}
+@media (max-width:900px){.pains{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:520px){.pains{grid-template-columns:1fr}}
+
+/* AI features */
+.features{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.feature{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:24px;display:grid;gap:12px;align-content:start;min-width:0}
+.feature-top{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.feature p{color:var(--muted);font-size:15.5px}
+.feature ul{margin:0;padding-left:18px;font-size:15px;display:grid;gap:4px}
+.feature .example{font-family:var(--f-mono);font-size:12.5px;background:var(--surface-2);border-radius:9px;padding:9px 11px;color:var(--ink);overflow-wrap:anywhere}
+@media (max-width:760px){.features{grid-template-columns:1fr}}
+
+/* day timeline */
+.day{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.day li{display:grid;grid-template-columns:72px 1fr;gap:20px;padding-block:16px;border-bottom:1px solid var(--line)}
+.day li:last-child{border-bottom:0}
+.day time{font-family:var(--f-mono);font-size:15px;color:var(--brand);font-variant-numeric:tabular-nums;padding-top:2px}
+.day .row{display:flex;gap:10px;align-items:baseline;flex-wrap:wrap}
+.day p{color:var(--muted);font-size:15.5px;margin-top:2px}
+
+/* control */
+.control{display:grid;grid-template-columns:repeat(3,1fr);gap:28px}
+.control div{display:grid;gap:8px;align-content:start}
+.control p{color:var(--muted);font-size:15.5px}
+@media (max-width:760px){.control{grid-template-columns:1fr}}
+
+/* steps */
+.steps{list-style:none;padding:0;margin:0;display:grid;grid-template-columns:repeat(3,1fr);gap:20px;counter-reset:s}
+.steps li{counter-increment:s;display:grid;gap:8px;align-content:start}
+.steps li::before{content:counter(s);font-family:var(--f-display);font-size:28px;color:var(--brand)}
+.steps p{color:var(--muted);font-size:15.5px}
+@media (max-width:760px){.steps{grid-template-columns:1fr}}
+
+/* form */
+.signup{display:grid;grid-template-columns:.9fr 1.1fr;gap:48px;align-items:start}
+.signup-copy{display:grid;gap:16px}
+.signup-copy ul{margin:0;padding-left:18px;color:var(--muted);display:grid;gap:6px}
+form{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:24px;display:grid;gap:16px;min-width:0}
+.field{display:grid;gap:6px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+label,.legend{font-size:14px;font-weight:500}
+input[type=text],input[type=email],input[type=tel],input[type=number],select{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:11px 12px;width:100%}
+fieldset{border:0;padding:0;margin:0;display:grid;gap:8px}
+.checks{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.check{display:flex;gap:8px;align-items:flex-start;font-size:15px;font-weight:400;background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:9px 11px;cursor:pointer}
+.check input{margin-top:4px;accent-color:var(--brand)}
+.consent{font-weight:400;font-size:13.5px;color:var(--muted);display:flex;gap:8px;align-items:flex-start}
+.consent input{margin-top:3px;accent-color:var(--brand)}
+.error{color:var(--warn);font-size:14px}
+.done{display:grid;gap:12px;background:var(--brand-soft);border-radius:var(--r);padding:24px}
+@media (max-width:900px){.signup{grid-template-columns:1fr;gap:28px}}
+@media (max-width:520px){.field-row,.checks{grid-template-columns:1fr}}
+
+/* faq */
+.faq{display:grid;gap:10px;max-width:780px}
+details{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:14px 18px}
+summary{cursor:pointer;font-weight:600;list-style:none;display:flex;justify-content:space-between;gap:12px}
+summary::after{content:"+";font-family:var(--f-mono);color:var(--brand)}
+details[open] summary::after{content:"–"}
+details p{color:var(--muted);margin-top:10px;font-size:15.5px}
+
+footer{border-top:1px solid var(--line);padding-block:32px;font-size:14px;color:var(--muted)}
+.foot{display:flex;justify-content:space-between;gap:16px;flex-wrap:wrap}
+
+@media (prefers-reduced-motion:no-preference){
+  .msg{animation:rise .5s ease both}
+  .msg:nth-child(2){animation-delay:.25s}.msg:nth-child(3){animation-delay:.5s}.msg:nth-child(4){animation-delay:.75s}
+  @keyframes rise{from{transform:translateY(6px)}to{transform:none}}
+}
+
+/* Google Form embed */
+.signup{grid-template-columns:1fr;gap:28px}
+.form-embed{display:grid;gap:12px;min-width:0}
+.form-embed iframe{width:100%;height:1500px;border:1px solid var(--line);border-radius:var(--r);background:#fff}
+.form-fallback{display:grid;gap:12px;justify-items:start;background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:24px}
+@media (max-width:520px){.form-embed iframe{height:1800px}}
+.tina{white-space:nowrap}.tina .den{color:var(--muted);font-weight:500}
+.tina-note{font-size:14.5px;color:var(--ink);background:var(--brand-soft);border-radius:9px;padding:9px 11px}
+.ai-tag.no-spark::before{display:none}.ai-tag.no-spark .den{font-weight:400}.ai-tag.no-spark b{font-weight:700}
+.btn .den{font-weight:400}.btn b{font-weight:700}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap nav">
+    <a class="logo" href="#top">Кабинет+</a>
+    <nav class="nav-links" aria-label="Основна навигация">
+      <a href="#ai">AI функции</a>
+      <a href="#day">Как работи?</a>
+      <a href="#start">Как започвате</a>
+      <a href="#faq">Въпроси</a>
+    </nav>
+    <a class="btn btn-primary" href="#signup" style="padding:9px 16px;font-size:15px">Ранен достъп</a>
+  </div>
+</header>
+
+<main id="top">
+  <div class="wrap hero">
+    <div class="hero-copy">
+      <span class="eyebrow">За кабинети с 1–2 стола</span>
+      <h1>AI асистент за вашия дентален кабинет</h1>
+      <p class="lead">Вие лекувате. Тина, вашият AI асистент, отговаря на пациентите, попълва амбулаторния лист от диктовка и подготвя фактурата. Вие само одобрявате.</p>
+      <ul class="hero-points">
+        <li>Никое съобщение без отговор, дори в 22:00</li>
+        <li>Амбулаторният лист е готов, докато сваляте ръкавиците</li>
+        <li>Без администрация вечер</li>
+      </ul>
+      <div class="cta-row">
+        <a class="btn btn-primary" href="#signup">Запишете се за ранен достъп</a>
+        <a class="btn btn-ghost" href="#ai">Какво прави<span><span class="den">ден</span><b>Тина</b></span></a>
+      </div>
+      <p class="beta-note">Бета версия. Приемаме първите 10 кабинета безплатно.</p>
+    </div>
+
+    <div class="mock" aria-label="Пример за работа на AI асистента">
+      <div class="panel">
+        <div class="panel-head"><span>Съобщения от пациенти</span><span class="ai-tag no-spark"><span class="den">ден</span><b>Тина</b> · AI секретар</span></div>
+        <div class="chat">
+          <div class="msg patient"><time>21:47</time>Здравейте, може ли час за почистване другата седмица?</div>
+          <div class="msg bot"><time><span class="den">ден</span><b>Тина</b> · 21:47</time>Здравейте! Свободни са: вт 14:00, ср 10:30, чт 16:00. Кой час ви е удобен?</div>
+          <div class="msg patient"><time>21:49</time>Сряда, 10:30.</div>
+          <div class="msg bot"><time><span class="den">ден</span><b>Тина</b> · 21:49</time>Записах ви за сряда, 10:30, почистване на зъбен камък. Ще получите напомняне ден преди това.</div>
+        </div>
+        <div class="booked"><span>Нов час: <b>ср 10:30</b> · почистване</span><span class="muted" style="font-size:13px">чака вашето потвърждение</span></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head"><span>Амбулаторен лист</span><span class="ai-tag">AI от диктовка</span></div>
+        <div class="dictation">Диктовка: <span>„Зъб 36, кариес на дентина, обтурация с композит, с анестезия.“</span></div>
+        <dl class="sheet">
+          <dt>Зъб</dt><dd>36</dd>
+          <dt>Диагноза</dt><dd>K02.1 Кариес на дентина</dd>
+          <dt>Дейност</dt><dd>Обтурация с композит</dd>
+          <dt>Анестезия</dt><dd>Да</dd>
+        </dl>
+        <div class="approve">
+          <span class="btn btn-primary" role="presentation">Одобри</span>
+          <span class="btn btn-ghost" role="presentation">Редактирай</span>
+        </div>
+      </div>
+      <p class="sample-note">Примерни данни</p>
+    </div>
+  </div>
+
+  <section class="band">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Проблемът</span>
+        <h2>В малкия кабинет лекарят е и секретар, и асистент</h2>
+        <p class="muted">Всичко, което не е лечение, отнема от времето за пациенти или от вечерта ви.</p>
+      </div>
+      <div class="pains">
+        <div class="pain"><h3>Телефонът звъни по време на лечение</h3><p>Не можете да вдигнете с ръкавици. Новият пациент се обажда на друг кабинет, а съществуващият е недоволен.</p></div>
+        <div class="pain"><h3>Пациент забравя часа си</h3><p>Столът стои празен, часът е изгубен, а плащане няма.</p></div>
+        <div class="pain"><h3>Документите остават за вечерта</h3><p>Амбулаторни листове, тетрадка, Excel и фактури след работа.</p></div>
+        <div class="pain"><h3>Пациентите не се връщат</h3><p>Колко често столът е празен, а няма кой да напомни за профилактичен преглед след 6 месеца?</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="ai">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">AI приложение</span>
+        <h2>AI поема рутината. Решенията остават ваши.</h2>
+        <p class="muted">Всяка функция прави една конкретна работа и ви показва резултата за одобрение.</p>
+      </div>
+      <div class="features">
+        <article class="feature">
+          <div class="feature-top"><h3><span class="tina"><span class="den">ден</span>Тина</span>, AI секретар</h3><span class="ai-tag">в бета</span></div>
+          <p>Отговаря на пациентите денонощно, предлага свободни часове и записва заявки за обратно обаждане.</p>
+          <p class="tina-note">Казва се денТина, за кратко Тина. В по-високите планове можете да я кръстите с име по ваш избор.</p>
+          <ul><li>Знае работното ви време, адреса и услугите</li><li>Отговаря на чести въпроси: паркинг, плащане с карта</li><li>Никога не дава медицински съвети и цени на лечение</li></ul>
+          <div class="example">Пациент: „Боли ме зъб, имате ли час днес?“ → AI предлага най-ранния свободен час и отбелязва „спешно“.</div>
+        </article>
+        <article class="feature">
+          <div class="feature-top"><h3>AI напомняния и профилактика</h3><span class="ai-tag">в бета</span></div>
+          <p>Напомня на пациентите за часа им и намира тези, които не са идвали над 6 месеца.</p>
+          <ul><li>Напомняне ден преди часа</li><li>Списък „за профилактика“ всеки месец</li><li>Предефинирани съобщения за различни случаи</li></ul>
+          <div class="example">14 пациенти без посещение от 6+ месеца → изпращане на покана с един клик</div>
+        </article>
+        <article class="feature">
+          <div class="feature-top"><h3>AI амбулаторен лист</h3><span class="soon">скоро</span></div>
+          <p>Диктувате по време на лечението, AI попълва листа: зъб, диагноза, дейност. Проверявате и одобрявате.</p>
+          <ul><li>Разпознава зъбите по номерацията, която ползвате</li><li>Предлага диагноза и дейност, вие потвърждавате</li><li>Обновява зъбния статус в картона</li></ul>
+          <div class="example">„Зъб 46, екстракция, с анестезия“ → готов лист за 10 секунди</div>
+        </article>
+        <article class="feature">
+          <div class="feature-top"><h3>AI фактури</h3><span class="soon">скоро</span></div>
+          <p>След одобрения амбулаторен лист AI подготвя фактурата по вашия ценоразпис и реквизити.</p>
+          <ul><li>Номерацията продължава от последната ви фактура</li><li>Цените идват от вашия ценоразпис, с опция за промяна</li><li>Един клик за издаване</li></ul>
+          <div class="example">Обтурация с композит, зъб 36 → фактура № 0000142, готова за издаване</div>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <section id="day" class="band">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Един ден с Кабинет+</span>
+        <h2>Какво прави AI, докато вие лекувате</h2>
+      </div>
+      <ol class="day">
+        <li><time>08:30</time><div><div class="row"><h3>Напомнянията тръгват</h3><span class="ai-tag">AI</span></div><p>Пациентите за утре получават напомняне. Двама потвърждават, един мести часа си.</p></div></li>
+        <li><time>10:15</time><div><div class="row"><h3>Телефонът звъни по време на обтурация</h3><span class="ai-tag">AI</span></div><p>Тина отговаря на съобщението и предлага свободен час. Вие продължавате работа.</p></div></li>
+        <li><time>10:40</time><div><div class="row"><h3>Диктувате след лечението</h3><span class="ai-tag">AI</span></div><p>Амбулаторният лист е попълнен. Проверявате го и натискате „Одобри“.</p></div></li>
+        <li><time>10:41</time><div><div class="row"><h3>Фактурата е готова</h3><span class="ai-tag">AI</span></div><p>Подготвена по ценоразписа ви, с правилния номер. След одобрение се изпраща на пациента заедно с амбулаторния лист.</p></div></li>
+        <li><time>18:00</time><div><div class="row"><h3>Затваряте кабинета</h3></div><p>Документите са готови, пациентските картони са актуализирани. Вечерта е на ваше разположение.</p></div></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="control">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Контрол и защита</span>
+        <h2>AI предлага. Вие одобрявате.</h2>
+      </div>
+      <div class="control">
+        <div><h3>Нищо не се издава без вас</h3><p>Амбулаторен лист, фактура и нов час чакат вашето потвърждение. Можете да редактирате всичко.</p></div>
+        <div><h3>Без медицински съвети</h3><p>Тина отговаря само за часове, адрес и организация. Медицинските въпроси остават за лекаря.</p></div>
+        <div><h3>Данните са само ваши</h3><p>Всеки кабинет вижда само своите пациенти. Двуфакторна защита при вход и дневник на всеки достъп.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="start" class="band">
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">Как започвате</span>
+        <h2>Три стъпки до първия ден с AI</h2>
+      </div>
+      <ol class="steps">
+        <li><h3>Запишете се за ранен достъп</h3><p>Две минути: кабинет, град, кои AI функции ви интересуват.</p></li>
+        <li><h3>Безплатен анализ</h3><p>Кратък разговор за това къде губите време. Получавате безплатен анализ, доклад с цифрите и препоръки.</p></li>
+        <li><h3>План за действие</h3><p>При желание ви предоставяме безплатен бета достъп и работим заедно за плавен старт.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="signup">
+    <div class="wrap signup">
+      <div class="signup-copy">
+        <span class="eyebrow">Ранен достъп</span>
+        <h2>Станете един от първите 10 кабинета</h2>
+        <p class="muted">Бета версията е безплатна. В замяна искаме честна обратна връзка веднъж седмично.</p>
+        <ul>
+          <li>Безплатен анализ на кабинета</li>
+          <li>Пренасяне на пациентите от нас</li>
+          <li>Първи достъп до всяка нова AI функция</li>
+        </ul>
+      </div>
+
+      <div class="form-embed" id="form-embed">
+        <iframe id="gform" title="Форма за ранен достъп" loading="lazy" hidden>Зареждане…</iframe>
+        <div class="form-fallback" id="form-fallback">
+          <h3>Формата отнема около 2 минути</h3>
+          <p class="muted">Ще ви попитаме за кабинета, кое ви отнема най-много време и кои функции на денТина искате първо.</p>
+          <a class="btn btn-primary" id="form-link" href="#" target="_blank" rel="noopener">Попълнете формата</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="faq" class="band">
+    <div class="wrap">
+      <div class="section-head"><span class="eyebrow">Въпроси</span><h2>Често задавани въпроси</h2></div>
+      <div class="faq">
+        <details><summary>Колко струва?</summary><p>Безплатно по време на бета версията. След нея ще има безплатен план и платени планове с AI функциите. Първите кабинети получават отстъпка.</p></details>
+        <details><summary>Коя е Тина?</summary><p>Тина е вашият AI асистент. Пълното ѝ име е денТина, от дентин, тъканта под зъбния емайл. В по-високите планове можете да ѝ дадете друго име.</p></details>
+        <details><summary>Ами ако AI сгреши?</summary><p>AI само предлага. Амбулаторният лист, фактурата и новият час чакат вашето одобрение и можете да ги редактирате.</p></details>
+        <details><summary>Трябва ли да въвеждам пациентите сам?</summary><p>Не. Пренасяме ги ние от Excel, друга програма или снимки на картоните.</p></details>
+        <details><summary>Ще отговаря ли AI на медицински въпроси?</summary><p>Не. Тина отговаря само за часове, адрес и организация. Медицинските въпроси насочва към вас.</p></details>
+        <details><summary>Мога ли да се откажа?</summary><p>Да, по всяко време, с експорт на всички данни.</p></details>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap foot">
+    <span><b style="color:var(--ink)">Кабинет+</b> · AI асистент за малки дентални кабинети</span>
+    <span>Политика за поверителност · Условия за ползване · Контакт</span>
+  </div>
+</footer>
+
+<script>
+/* Поставете тук линка към вашата Google Form (Изпращане → <> Вграждане → копирайте адреса от src="…"). */
+const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSc40alj61rqa9m-YAJHzn7QlXB73dkDFWD9U8yPPQHXPg8jfg/viewform?embedded=true";
+(function(){
+  const ready = !FORM_URL.includes("ВАШИЯТ_ID");
+  const iframe = document.getElementById("gform");
+  const link = document.getElementById("form-link");
+  const openUrl = FORM_URL.replace("?embedded=true","").replace("&embedded=true","");
+  link.href = ready ? openUrl : "#signup";
+  if (ready) {
+    iframe.src = FORM_URL; iframe.hidden = false;
+    document.querySelector("#form-fallback h3").textContent = "Формата не се зарежда?";
+    document.querySelector("#form-fallback p").textContent = "Отворете я в нов прозорец.";
+    link.textContent = "Отворете формата";
+  }
+  else { link.textContent = "Формата се подготвя"; link.setAttribute("aria-disabled","true"); }
+})();
+</script>
+</body>
+</html>
